@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>canvas 刮刮卡</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        #box {
+            width: 540px;
+            min-height: 360px;
+            margin: 50px auto;
+            background: url('http://placehold.it/540x360/efefef/ffffff')no-repeat;
+            background-size: cover;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 刮刮卡，背景图片，早已放下，奖已经确定，刮的体验 -->
+    <div id="box">
+    </div>
+    <script src="http://cdn.bootcss.com/jquery/2.2.1/jquery.min.js"></script>
+    <script src="http://mockjs.com/dist/mock.js">
+    </script>
+    <script>
+        Mock.mock('/award/1', [{
+            'name': '特斯拉',
+            'url': 'http://cms-bucket.nosdn.127.net/catchpic/b/ba/bad6f58166f555751eee6cd643e8ce10.jpg?imageView&thumbnail=550x0',
+        }]);
+        Mock.mock('/award/2', [{
+            'name': '欧洲10日游',
+            'url': 'https://f7.sjbly.cn/m17/0711/0937/rainliudlh_750x500_fem.jpg',
+        }]);
+        $(function() {
+            const box = document.querySelector('#box');
+            //jquery ajax
+            // 模拟现实 ar 前端30 % 改变 输入入口交互方式
+            // 前端大数据 VR 交互的数据将是庞大的
+            let award = {};
+            $.getJSON('/award/2', function(data) {
+                    award = data[0];
+                    box.style.backgroundImage = 'url(' + data[0].url + ')';
+                })
+                // canvas 绘制刮刮卡
+            function init() {
+                if (!document.getElementById('myCanvas')) {
+                    var width = '';
+                    var height = '';
+                    // 绘制canvas
+                    var canvas = document.createElement('canvas');
+                    width = document.getElementById('box').offsetWidth;
+                    height = document.getElementById('box').offsetHeight;
+                    canvas.setAttribute('width', width + 'px');
+                    canvas.setAttribute('height', height + 'px');
+                    canvas.id = 'myCanvas';
+                    // 将canvas添加到box
+                    document.getElementById('box')
+                        .appendChild(canvas);
+                }
+                var myCanvasObject = document.getElementById('myCanvas');
+                var ctx = myCanvasObject.getContext('2d');
+                // 绘制黑色的矩形
+                ctx.beginPath(); //声明开始画
+                ctx.fillStyle = '#939393';
+                ctx.rect(0, 0, width, height);
+                ctx.closePath();
+                ctx.fill();
+                //清楚一下
+                // 事件 手机上ontouchstart
+                //           ontouchmove
+                //           ontouchend
+                //     PC    onmousedown
+                //           onmousemove
+                //           onmouseup
+                // pc端肯定没有touch事件
+                // 在移动端有touch事件 也支持mousedown
+                // 移动端，哪个更早发生？
+                // touchstart>mousedown
+                // 两个事件都发生？怎么办？ 选择一个ontouchstart
+                // PC onmousedown敏感度不好
+
+                // myCanvasObject.addEventListener('mousedown', function() {
+                //     console.log("鼠标左点下来");
+                // })
+                // myCanvasObject.addEventListener('touchstart', function() {
+                //     console.log("触摸下来");
+                // })
+                var hasTouch =
+                    "ontouchstart" in window ? true : false;
+                var tapStar =
+                    hasTouch ? 'touchstart' : 'mousedown';
+                var tapMove =
+                    hasTouch ? 'touchmove' : 'mousemove';
+                var tapEnd =
+                    hasTouch ? 'touchend' : 'mouseup';
+                var isDown = false;
+                var pointerArr = [];
+                var xPointer = 0; //当前坐标位置
+                var yPointer = 0;
+                // 要绘制的点都放在这里 touch 事件 event对象都会给我们一个点坐标（x,y）
+
+                myCanvasObject.addEventListener(tapStar, function(event) {
+                    this.style.cursor = 'move';
+                    isDown = true;
+                    console.log(event.targetTouches[0].pageX);
+                    // touch 手指按下的那刻
+                    xPointer = hasTouch ?
+                        event.targetTouches[0].pageX : event.clientX - this.offsetLeft;
+                    // event.clientX mousedown事件 鼠标离屏幕最左端的距离
+                    // this.offsetLeft canvas左边离屏幕最左端的距离
+                    // event.clientX - this.offsetLeft 起始点
+                    // PC端
+                    // console.log(event.clientX - this.offsetLeft);
+                    // console.log(event.clientY - this.offsetTop);
+                })
+                myCanvasObject.addEventListener(tapMove, function() {
+                    console.log("擦除");
+                })
+                myCanvasObject.addEventListener(tapEnd, function() {
+                    console.log("结束");
+                })
+            }
+            init();
+        })
+    </script>
+</body>
+
+</html>
